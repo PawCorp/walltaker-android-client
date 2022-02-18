@@ -3,6 +3,7 @@ package org.pawcorp.walltaker
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_IMMUTABLE
+import android.app.PendingIntent.FLAG_MUTABLE
 import android.app.WallpaperManager
 import android.content.Context
 import android.content.Intent
@@ -13,6 +14,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.View
 import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -79,7 +81,27 @@ class MainActivity : AppCompatActivity() {
                         val mHandler = Handler(Looper.getMainLooper())
                         mHandler.post(Runnable {
                             val imgPreview = findViewById<ImageView>(R.id.previewImageView)
+                            val setByTxt = findViewById<TextView>(R.id.textViewSetByMsg)
+                            setByTxt.text = "Set by $setBy"
                             Picasso.get().load(userData.post_thumbnail_url).into(imgPreview)
+                            Picasso.get().load(userData.post_url).resize(720, 1280).centerCrop()
+                                .onlyScaleDown() // the image will only be resized if it's bigger
+                                .into(object : com.squareup.picasso.Target{
+                                    override fun onBitmapLoaded(bitmap: Bitmap?, from: Picasso.LoadedFrom?) {
+                                        val wpm : WallpaperManager = getSystemService(Context.WALLPAPER_SERVICE) as WallpaperManager
+                                        wpm.setBitmap(bitmap)
+                                    }
+
+                                    override fun onBitmapFailed(e: Exception?, errorDrawable: Drawable?) {
+                                        println("whoopsie!")
+                                        println(e)
+                                    }
+
+                                    override fun onPrepareLoad(placeHolderDrawable: Drawable?) {
+                                        println("Setting wallpaper!")
+                                    }
+
+                                })
                         })
 
                     }
@@ -91,8 +113,13 @@ class MainActivity : AppCompatActivity() {
     private fun loadData() {
         val sharedPreferences = getSharedPreferences("sharedPrefs", Context.MODE_PRIVATE)
         val savedId = sharedPreferences.getString("USER_ID", null)
+        val setBy = sharedPreferences.getString("LAST_SET_BY", null)
         val linkId = findViewById<EditText>(R.id.editTextTextLinkID)
         linkId.setText(savedId)
+        val setByTxt = findViewById<TextView>(R.id.textViewSetByMsg)
+        if (setBy != null) {
+            setByTxt.text = "Set by $setBy"
+        }
         val lastPostThumbUrl = sharedPreferences.getString("LAST_POST_THUMB_URL", null)
         if (lastPostThumbUrl != null) {
             val mHandler = Handler(Looper.getMainLooper())
@@ -110,7 +137,7 @@ class MainActivity : AppCompatActivity() {
         //creating a new intent specifying the broadcast receiver
         val i = Intent(this, AlarmReceiver::class.java)
         //creating a pending intent using the intent
-        val pi = PendingIntent.getBroadcast(this, 0, i, FLAG_IMMUTABLE)
+        val pi = PendingIntent.getBroadcast(this, 0, i, FLAG_MUTABLE)
         //setting the repeating alarm that will be fired every 10 seconds
         assert(am != null)
         am.setExactAndAllowWhileIdle(
@@ -139,6 +166,19 @@ class MainActivity : AppCompatActivity() {
                 }
 
             })
+    }
+
+    fun refresh(view: View) {
+        Toast.makeText(this, "Refresh Clicked", Toast.LENGTH_SHORT).show()
+        initScreen()
+    }
+
+    fun onClickBtnStop(view: View) {
+        val intent = Intent(this, AlarmReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(this, 0, intent, FLAG_MUTABLE)
+        val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
+        alarmManager.cancel(pendingIntent)
+        Toast.makeText(this, "Stopped!", Toast.LENGTH_SHORT).show()
     }
 
 }
