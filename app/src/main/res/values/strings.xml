@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Walltaker</string>
+    <string name="walltaker_id_instruction_text">Enter your Walltaker ID</string>
+    <string name="walltaker_url_base">https://walltaker.joi.how/links/</string>
+    <string name="walltaker_id_default">0</string>
+    <string name="updateButtonLabel">Update and Start</string>
+    <string name="image_preview_label">Preview of Current Image</string>
+</resources>
