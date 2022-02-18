@@ -29,7 +29,7 @@
             android:name="org.pawcorp.walltaker.AlarmReceiver"
             android:enabled="true"
             android:exported="true" />
-        <service android:name="org.pawcorp.walltaker.WalltakerService" android:process=":remote"/>
+        <service android:name="org.pawcorp.walltaker.WalltakerService" android:process=":remote" android:exported="true"/>
     </application>
 
 </manifest>
